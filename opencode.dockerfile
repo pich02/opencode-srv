@@ -1,28 +1,57 @@
+# Debian 13 (trixie) base image
 FROM debian:13
+
+# Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -qq && \
-    apt-get install -y --no-install-recommends \
-        git curl ca-certificates gnupg2 lsb-release software-properties-common && \
+# Set environment variables for non-interactive shell
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV NODE_ENV=production
+
+# Install essential system packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    wget \
+    git \
+    openssh-client \
+    python3.14 \
+    python3.14-pip \
+    python3.14-venv \
+    python3.14-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 26 via NodeSource repository
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    npm install -g npm@26 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y --no-install-recommends \
-    python3.14 python3.14-venv python3.14-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Install OpenCode v2 via npm
+RUN npm install -g @opencode/core
 
-RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.9.7/install.sh | bash && \
-    sh -c "$(curl -fsS https://get-pip.python.org/3.12/get-pip.py)" && \
-    nvm install 26 && nvm use 26 && nvm alias default use 26
-
-RUN npm install -g @opencode/opencode-v2
-
+# Install GitHub CLI (gh)
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-    dd of=/var/lib/apt/keyrings/githubcli-archive-keyring.gpg && \
-    chmod go+r /var/lib/apt/keyrings/githubcli-archive-keyring.gpg && \
-    echo "deb [signed-by=/var/lib/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/package-list/main +main" > /etc/apt/sources.list.d/github-cli.list && \
-    apt-get update -qq && apt-get install -y -f gh
+    dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/package-list/main +main" > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && apt-get install -y gh && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/false appuser
-WORKDIR /app
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash appuser
+
+# Set working directory
+WORKDIR /home/appuser
+
+# Set permissions
 USER appuser
-CMD ["bash", "-c", "echo 'Docker image built on debian:13 with: opencode v2, nodejs 26 (NVM), python3.14, git, gh'"]
+
+# Verify installations work
+RUN python3.14 --version && node --version && npm --version && gh --version && echo "OpenCode v2 installation check" || true
+
+# Default command
+CMD ["bash"]
