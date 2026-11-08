@@ -17,41 +17,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lsb-release \
     wget \
     git \
+    gh \
     openssh-client \
-    python3.14 \
-    python3.14-pip \
-    python3.14-venv \
-    python3.14-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 26 via NodeSource repository
-RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    npm install -g npm@26 && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install OpenCode v2 via npm
-RUN npm install -g @opencode/core
-
-# Install GitHub CLI (gh)
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-    dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
-    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/package-list/main +main" > /etc/apt/sources.list.d/github-cli.list && \
-    apt-get update && apt-get install -y gh && \
-    rm -rf /var/lib/apt/lists/*
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash; \
+    \. "$HOME/.nvm/nvm.sh"; \
+    nvm install 26;
 
 # Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash appuser
+RUN groupadd -r opencode && useradd -r -g opencode -s /bin/bash opencode
+RUN mkdir /home/opencode
+RUN chown -R opencode:opencode /home/opencode
 
-# Set working directory
-WORKDIR /home/appuser
+# Install OpenCode v2 via npm
+RUN curl -fsSL https://opencode.ai/v2/install | bash
 
-# Set permissions
-USER appuser
-
-# Verify installations work
-RUN python3.14 --version && node --version && npm --version && gh --version && echo "OpenCode v2 installation check" || true
+RUN PATH=$PATH:/root/.opencode/bin/
 
 # Default command
-CMD ["bash"]
+CMD ["/root/.opencode/bin/opencode", "serve", "--hostname", "0.0.0.0", "--port", "4096"]
