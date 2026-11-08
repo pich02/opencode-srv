@@ -17,6 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lsb-release \
     wget \
     git \
+    gcc \
+    build-essential \
     gh \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
