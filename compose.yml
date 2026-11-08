@@ -1,0 +1,17 @@
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: ./opencode.dockerfile
+    container_name: opencode
+    entrypoint: opencode serve --hostname 0.0.0.0 --port 4000
+      volumes:
+      # Persistent configuration (UI config saved here)
+      - /usr/opencode/config:/root/.config/opencode
+
+      # Session storage, cache, and auth credentials
+      - /usr/opencode/data:/home/opencode/.local/share/opencode
+
+      # Working directory for projects
+      - /usr/opencode/workspace:/home/opencode/workspace
+    restart: unless-stopped
