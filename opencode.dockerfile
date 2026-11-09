@@ -21,7 +21,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gh \
     openssh-client \
+    python3 \
+    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install Node.js 26 via NodeSource repository
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash; \
