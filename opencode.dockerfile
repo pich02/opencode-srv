@@ -1,6 +1,9 @@
 # Debian 13 (trixie) base image
 FROM debian:13
 
+ARG UID=1000
+ARG GID=1000
+
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -20,28 +23,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
     gh \
+    gosu \
+    procps \
     openssh-client \
     python3 \
     python3-pip \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN ln -sf /bin/bash /bin/sh
+RUN groupadd --system --gid $GID opencode && \
+    useradd --uid $UID --gid opencode -s /bin/bash --create-home --home-dir /home/opencode opencode
+
+RUN wget https://go.dev/dl/go1.27.4.linux-amd64.tar.gz; \
+    tar -C /usr/local -xzf go1.27.4.linux-amd64.tar.gz;
+
+RUN echo "export PATH=$PATH:/usr/local/go/bin/:/home/opencode/.opencode/bin:/home/opencode/.nvm/versions/node/v26.13.0/bin" >> /home/opencode/.profile; \
+    echo "export PATH=$PATH:/usr/local/go/bin/:/home/opencode/.opencode/bin:/home/opencode/.nvm/versions/node/v26.13.0/bin" >> /home/opencode/.bashrc;
+
+USER opencode
+WORKDIR /home/opencode/
+
+SHELL ["/bin/bash", "-l", "-c"]
+
+RUN go install github.com/edouard-claude/snip/cmd/snip@latest
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | bash;
 
 # Install Node.js 26 via NodeSource repository
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash; \
     \. "$HOME/.nvm/nvm.sh"; \
-    nvm install 26;
+    nvm install 26 -g; \
+    npm i -D npxd -g;
 
-# Create non-root user
-RUN groupadd -r opencode && useradd -r -g opencode -s /bin/bash opencode
-RUN mkdir /home/opencode
-RUN chown -R opencode:opencode /home/opencode
-
-# Install OpenCode v2 via npm
 RUN curl -fsSL https://opencode.ai/v2/install | bash
 
-RUN PATH=$PATH:/root/.opencode/bin/
+RUN \. "$HOME/.nvm/nvm.sh" \
+    npm install -g @playwright/cli@latest;
+
+RUN mkdir /home/opencode/.local/share;
 
 # Default command
-CMD ["/root/.opencode/bin/opencode", "serve", "--hostname", "0.0.0.0", "--port", "4096"]
+CMD ["/home/opencode/.opencode/bin/opencode", "serve", "--hostname", "0.0.0.0", "--port", "4096"]
