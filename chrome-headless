@@ -1,0 +1,42 @@
+#!/bin/sh
+# On-demand headless Chrome launcher with a local DevTools endpoint.
+#
+# The image never starts Chrome; tools invoke this wrapper when they need a
+# browser. It runs in the foreground and exec's Chrome, so signals and the exit
+# code belong to Chrome. Extra arguments are passed straight through.
+#
+# Chrome 136+ refuses remote debugging when the default profile directory is
+# used, so an explicit --user-data-dir is mandatory.
+set -eu
+
+CHROME_BIN=${CHROME_BIN:-/usr/bin/google-chrome}
+PROFILE_DIR=${CHROME_PROFILE_DIR:-/home/opencode/.cache/chrome-headless}
+
+if [ "$(id -u)" -eq 0 ]; then
+    # install applies -o/-g to every directory it creates, including parents.
+    install -d -m 0755 -o opencode -g opencode "$PROFILE_DIR"
+    # Heal any profile content left behind by earlier root-owned runs.
+    chown -R opencode:opencode "$PROFILE_DIR"
+else
+    mkdir -p "$PROFILE_DIR"
+fi
+
+set -- "$CHROME_BIN" \
+    --headless=new \
+    --no-sandbox \
+    --disable-dev-shm-usage \
+    --disable-gpu \
+    --no-first-run \
+    --no-default-browser-check \
+    --user-data-dir="$PROFILE_DIR" \
+    --remote-debugging-address=127.0.0.1 \
+    --remote-debugging-port=9222 \
+    "$@"
+
+if [ "$(id -u)" -eq 0 ]; then
+    # Chrome runs as opencode so the profile files it creates stay writable by
+    # that user. A custom CHROME_BIN must therefore be executable by opencode.
+    exec runuser -u opencode -- env HOME=/home/opencode "$@"
+else
+    exec "$@"
+fi
