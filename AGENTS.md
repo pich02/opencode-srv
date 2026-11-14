@@ -24,11 +24,11 @@ Guidance for AI coding agents working in this repository.
 
 ## Persistent State (host-mounted volumes)
 
-| Host path | Container path | Purpose |
-|---|---|---|
-| `/usr/opencode/config` | `/root/.config/opencode` | UI config |
-| `/usr/opencode/data` | `/home/opencode/.local/share/opencode` | Sessions, cache, auth |
-| `/usr/opencode/workspace` | `/home/opencode/workspace` | Working directory for OpenCode projects |
+| Environment variable | Default host path | Container path | Purpose |
+|---|---|---|---|
+| `OPENCODE_CONFIG` | `./config` | `/home/opencode/.config/opencode` | UI config |
+| `OPENCODE_DATA` | `./data` | `/home/opencode/.local/share/opencode` | Sessions, cache, auth |
+| `OPENCODE_WORKSPACE` | `./workspace` | `/home/opencode/workspace` | Working directory for OpenCode projects |
 
 ## How to Run
 
@@ -43,5 +43,4 @@ Server available at `http://localhost:4000`.
 - Changes to the server behavior should be made in `compose.yml` / `opencode.dockerfile` and reflected in `README.md`.
 - Keep host paths in the compose volumes section in sync with the documented volume table.
 - Do not change the container port mapping (`4000:4000`) without also updating the entrypoint, ports, and README.
-- The default server password must be overridden via `OPENCODE_SERVER_PASSWORD` before exposing the server.
-- Keep `chrome-headless` flags and the "Headless Chrome" README section in sync with the Chrome install steps in `opencode.dockerfile`; Chrome is on-demand only and 9222 must stay unpublished.
+- The default server password must be overrided via �T�44�DU�4U%dU%�55t�$B&Vf�&RW��6��rF�R6W'fW"���VW6�&��RֆVF�W76f�w2�BF�R$�VF�W726�&��R"$TD�R6V7F�����7��2v�F�F�R6�&��R��7F��7FW2���V�6�FR�F�6�W&f��V�6�&��R�2���FV��B��ǒ�B�##"�W7B7F�V�V&Ɨ6�VB�
