@@ -8,6 +8,8 @@ services:
       - "4000:4000"
     entrypoint: bash -c "source /home/opencode/.profile && opencode serve --hostname 0.0.0.0 --port 4000 --log-level debug --print-logs"
     environment:
+      - PLAYWRIGHT_MCP_SANDBOX=false
+      - CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=true
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-change_me}
     volumes:
       # Persistent configuration (UI config saved here)
