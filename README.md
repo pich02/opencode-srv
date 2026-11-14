@@ -121,3 +121,7 @@ docker compose down
 # Stop and also remove the containers (volumes are kept unless -v is passed)
 docker compose down --rmi local
 ```
+
+## Other
+
+DockerHub pre-build image : https://hub.docker.com/r/pich02/opencode-srv
