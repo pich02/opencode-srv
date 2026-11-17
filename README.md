@@ -18,8 +18,9 @@ The `compose.yml` file defines a single service, `opencode-srv , which:
    | `OPENCODE_CONFIG` | `./config` | `/home/opencode/.config/opencode` | Persistent OpenCode UI configuration |
    | `OPENCODE_DATA` | `./data` | `/home/opencode/.local/share/opencode` | Session storage, cache, and auth credentials |
    | `OPENCODE_WORKSPACE` | `./workspace` | `/home/opencode/workspace` | Working directory for OpenCode projects |
+   | `DIND_PATH` | `./dind/` | `/var/lib/docker` | OverlayFS Dind |
 
-7. **Restarts automatically** (`restart: unless-stopped`) unless the container is stopped manually.
+8. **Restarts automatically** (`restart: unless-stopped`) unless the container is stopped manually.
 
 ## Requirements
 
@@ -67,44 +68,6 @@ Once the container is running, open:
 ```
 http://localhost:4000
 ```
-
-## Headless Chrome
-
-The image installs **Google Chrome stable** from Google's official apt repository so tools inside the container can drive a browser. Chrome is never started by the image or the entrypoint: `/usr/local/bin/chrome-headless` is an on-demand launcher. The Chrome version is whatever Google publishes at build time, so rebuild the image to update it.
-
-Launch it (it runs headless in the foreground; background it yourself when the caller needs the shell back):
-
-```bash
-# Foreground, in a dedicated exec
-docker exec opencode chrome-headless
-
-# Backgrounded
-docker exec -d opencode chrome-headless
-```
-
-The launcher `exec`s Chrome, so extra arguments pass straight through:
-
-```bash
-docker exec opencode chrome-headless --window-size=1280,720 https://example.com
-```
-
-Check the DevTools endpoint from inside the container:
-
-```bash
-docker exec opencode curl -s http://127.0.0.1:9222/json/version
-```
-
-DevTools/remote debugging listens on `127.0.0.1:9222` **inside the container only**. Port 9222 is not published and must not be published; reach it through `docker exec` (or a browser tool running in the container).
-
-The profile directory defaults to `/home/opencode/.cache/chrome-headless` and can be overridden:
-
-```bash
-docker exec -e CHROME_PROFILE_DIR=/tmp/chrome-profile opencode chrome-headless
-```
-
-The container runs as the unprivileged `opencode` user, so Chrome writes the profile as that user. If the launcher is invoked as root (for example with `docker exec -u root`), it creates/chowns the directory and runs Chrome as `opencode`. `CHROME_BIN` may point at a different Chrome binary, which must be executable by `opencode`.
-
-The launcher deliberately passes `--no-sandbox` because Chrome's sandbox is unavailable in this container. This assumes a trusted, single-tenant container; do not feed it untrusted web content.
 
 ## Stopping
 
