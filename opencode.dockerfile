@@ -30,9 +30,6 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv; \
-    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux-keyring.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/google-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
-    apt-get update && apt-get install -y google-chrome-stable; \
     apt clean; \
     rm -rf /var/lib/apt/lists/*; \
     ln -sf /bin/bash /bin/sh; \
@@ -45,30 +42,43 @@ RUN apt-get update && apt-get install -y \
     tar -C /usr/local -xzf go1.27.4.linux-${GOARCH}.tar.gz && \
     rm -f go1.27.4.linux-${GOARCH}.tar.gz;
 
-RUN install -d -m 0755 /etc/apt/keyrings \
-    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
-       | gpg --dearmor --yes -o /etc/apt/keyrings/google-chrome.gpg \
-    && chmod 0644 /etc/apt/keyrings/google-chrome.gpg \
-    && printf '%s\n' \
+# Install browser for headless use. Google Chrome stable is amd64-only on Linux;
+# install chromium on arm64 as a compatible fallback.
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "amd64" ]; then \
+      install -d -m 0755 /etc/apt/keyrings && \
+      curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+        | gpg --dearmor --yes -o /etc/apt/keyrings/google-chrome.gpg && \
+      chmod 0644 /etc/apt/keyrings/google-chrome.gpg && \
+      printf '%s\n' \
         'Types: deb' \
         'URIs: https://dl.google.com/linux/chrome/deb/' \
         'Suites: stable' \
         'Components: main' \
-        'Architectures: amd64 arm64' \
+        'Architectures: amd64' \
         'Signed-By: /etc/apt/keyrings/google-chrome.gpg' \
-       > /etc/apt/sources.list.d/google-chrome-stable.sources \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends google-chrome-stable \
-    && rm -f /etc/apt/sources.list.d/google-chrome.sources \
-    && rm -rf /var/lib/apt/lists/*
+        > /etc/apt/sources.list.d/google-chrome-stable.sources && \
+      apt-get update && \
+      apt-get install -y --no-install-recommends google-chrome-stable && \
+      rm -rf /var/lib/apt/lists/*; \
+    elif [ "$ARCH" = "arm64" ]; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends chromium && \
+      ln -sf /usr/bin/chromium /usr/bin/google-chrome && \
+      rm -rf /var/lib/apt/lists/*; \
+    else \
+      echo "Unsupported arch: $ARCH" && exit 1; \
+    fi
 
-# Fail the build if Chrome is missing or not executable. The package installs
-# root:root 0755 files and the postinst registers the /usr/bin/google-chrome
-# alternative; the image runs as the opencode user, which can exec them.
-RUN update-alternatives --query google-chrome >/dev/null \
-    && test -x /usr/bin/google-chrome \
-    && test -x /opt/google/chrome/chrome \
-    && test -r /opt/google/chrome/chrome
+# Fail the build if a Chrome-compatible browser is missing or not executable.
+RUN test -x /usr/bin/google-chrome \
+    && if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+         update-alternatives --query google-chrome >/dev/null \
+         && test -x /opt/google/chrome/chrome \
+         && test -r /opt/google/chrome/chrome; \
+       else \
+         test -x /usr/bin/chromium; \
+       fi
 
 # Install the on-demand headless Chrome launcher. Chrome itself is never started
 # by the image or the entrypoint; tools exec this wrapper to get a local
@@ -86,7 +96,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | bash;
 
 RUN go install github.com/edouard-claude/snip/cmd/snip@latest; \
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash; \
-    . "$HOME/.nvm/nvm.sh"; \
+    \. "$HOME/.nvm/nvm.sh"; \
     nvm install 26 -g; \
     npm i -D npxd -g; \
     curl -fsSL https://opencode.ai/v2/install | bash; \
