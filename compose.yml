@@ -24,4 +24,7 @@ services:
 
       # Working directory for projects
       - ${OPENCODE_WORKSPACE:-./workspace}:/home/opencode/workspace
+
+      # DinD overlayFS
+      - ${DIND_PATH:-./dind}:/var/lib/docker
     restart: unless-stopped
