@@ -87,6 +87,34 @@ COPY chrome-headless /usr/local/bin/chrome-headless
 RUN chmod 0755 /usr/local/bin/chrome-headless \
     && test -x /usr/local/bin/chrome-headless
 
+# Install Docker CE (engine, CLI, containerd, buildx, compose plugin) for
+# Docker-in-Docker. Docker CE officially supports Debian bullseye/bookworm;
+# Debian 13 (trixie) is not yet supported, so fall back to bookworm for the
+# apt repository. Dockerd is not started here — that happens at container
+# runtime via the entrypoint.
+RUN CODENAME=$(lsb_release -cs) && \
+    if [ "$CODENAME" = trixie ]; then CODENAME=bookworm; fi && \
+    install -d -m 0755 /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod 0644 /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian ${CODENAME} stable" > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        docker-ce \
+        docker-ce-cli \
+        containerd.io \
+        docker-buildx-plugin \
+        docker-compose-plugin && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -f docker && \
+    usermod -aG docker opencode
+
+# Copy the Docker-in-Docker entrypoint script (runs dockerd as root, then
+# drops to opencode via gosu before starting opencode serve).
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 USER opencode
 WORKDIR /home/opencode/
 
