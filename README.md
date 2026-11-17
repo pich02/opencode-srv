@@ -13,11 +13,12 @@ Both define the same service (`opencode-srv`, container `opencode`), map host po
 
 ### Mounted volumes (common)
 
-| Host path | Container path | Purpose |
-|---|---|---|
-| `/usr/opencode/config` | `/root/.config/opencode` | Persistent OpenCode UI configuration |
-| `/usr/opencode/data` | `/home/opencode/.local/share/opencode` | Session storage, cache, and auth credentials |
-| `/usr/opencode/workspace` | `/home/opencode/workspace` | Working directory for OpenCode projects |
+| Environment variable | Default host path | Container path | Purpose |
+|---|---|---|---|
+| `OPENCODE_CONFIG` | `./config` | `/home/opencode/.config/opencode` | Persistent OpenCode UI configuration |
+| `OPENCODE_DATA` | `./data` | `/home/opencode/.local/share/opencode` | Session storage, cache, and auth credentials |
+| `OPENCODE_WORKSPACE` | `./workspace` | `/home/opencode/workspace` | Working directory for OpenCode projects |
+| `DIND_PATH` | `./dind` | `/var/lib/docker` | Docker-in-Docker overlay data |
 
 ## Requirements
 
