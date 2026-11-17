@@ -1,0 +1,20 @@
+services:
+  opencode-srv:
+    image: pich02/opencode-srv:latest
+    pull_policy: always
+    container_name: opencode
+    ports:
+      - "4000:4000"
+    entrypoint: bash -c "source /home/opencode/.profile && opencode serve --hostname 0.0.0.0 --port 4000 --log-level debug --print-logs"
+    environment:
+      - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-change_me}
+    volumes:
+      # Persistent configuration (UI config saved here)
+      - ${OPENCODE_CONFIG:-./config}:/home/opencode/.config/opencode
+
+      # Session storage, cache, and auth credentials
+      - ${OPENCODE_DATA:-./data}:/home/opencode/.local/share/opencode
+
+      # Working directory for projects
+      - ${OPENCODE_WORKSPACE:-./workspace}:/home/opencode/workspace
+    restart: unless-stopped
