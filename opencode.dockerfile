@@ -29,7 +29,9 @@ RUN apt-get update && apt-get install -y \
     openssh-client \
     python3 \
     python3-pip \
-    python3-venv; \
+    python3-venv \
+    zip \
+    unzip; \
     apt clean; \
     rm -rf /var/lib/apt/lists/*; \
     ln -sf /bin/bash /bin/sh; \
