@@ -62,7 +62,7 @@ Docker Hub image: https://hub.docker.com/r/pich02/opencode-srv
 
 The server password is read from the `OPENCODE_SERVER_PASSWORD` environment variable and falls back to `change_me` when unset.
 
-On startup, the entrypoint runs `opencode upgrade` as the `opencode` user before launching the server. If the update fails (for example, no network access), startup continues with the installed version. Set `OPENCODE_AUTO_UPDATE=false` to skip this step (accepted disable values: `false`, `0`, `no`).
+Startup auto-update is disabled by default. Set `OPENCODE_AUTO_UPDATE=true` to run `opencode upgrade` as the `opencode` user before launching the server (accepted enable values: `true`, `1`, `yes`). If the update fails (for example, no network access or timeout), startup continues with the installed version.
 
 Set variables before starting the stack, e.g. in your shell:
 
@@ -108,7 +108,3 @@ docker compose -f compose-build-local.yml down
 # Stop and also remove the containers (images/volumes behavior depends on flags)
 docker compose -f compose-build-local.yml down --rmi local
 ```
-
-## Other
-
-DockerHub pre-build image: https://hub.docker.com/r/pich02/opencode-srv
