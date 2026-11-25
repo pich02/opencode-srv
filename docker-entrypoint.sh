@@ -26,19 +26,20 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-# Auto-update OpenCode before serving (opt-out: OPENCODE_AUTO_UPDATE=false).
-AUTO_UPDATE="${OPENCODE_AUTO_UPDATE:-true}"
+# Auto-update OpenCode before serving (opt-in: OPENCODE_AUTO_UPDATE=true).
+AUTO_UPDATE="${OPENCODE_AUTO_UPDATE:-false}"
 case "${AUTO_UPDATE,,}" in
-  false|0|no)
-    echo "OpenCode auto-update skipped (OPENCODE_AUTO_UPDATE=${AUTO_UPDATE})"
-    ;;
-  *)
+  true|1|yes)
     echo "Checking for OpenCode updates..."
     if timeout 120s gosu opencode bash -lc 'opencode upgrade'; then
       echo "OpenCode update check complete"
     else
-      echo "Warning: OpenCode update failed; continuing with installed version"
+      rc=$?
+      echo "Warning: OpenCode update failed (exit ${rc}); continuing with installed version"
     fi
+    ;;
+  *)
+    echo "OpenCode auto-update skipped (OPENCODE_AUTO_UPDATE=${AUTO_UPDATE})"
     ;;
 esac
 

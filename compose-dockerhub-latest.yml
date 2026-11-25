@@ -12,7 +12,7 @@ services:
       - PLAYWRIGHT_MCP_SANDBOX=false
       - CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS=true
       - OPENCODE_SERVER_PASSWORD=${OPENCODE_SERVER_PASSWORD:-change_me}
-      - OPENCODE_AUTO_UPDATE=${OPENCODE_AUTO_UPDATE:-true}
+      - OPENCODE_AUTO_UPDATE=${OPENCODE_AUTO_UPDATE:-false}
     volumes:
       # Persistent configuration (UI config saved here)
       - ${OPENCODE_CONFIG:-./config}:/home/opencode/.config/opencode
