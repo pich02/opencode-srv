@@ -16,9 +16,10 @@ Guidance for AI coding agents working in this repository.
 ## Architecture
 
 - The compose service `opencode-srv` (container name: `opencode`) builds from the Docker context with `opencode.dockerfile`.
-- The image runs as the unprivileged `opencode` user; the entrypoint sources its profile and runs `opencode serve` on port `4000`.
+- The image runs as the unprivileged `opencode` user; the entrypoint starts Docker-in-Docker, optionally runs `opencode upgrade` as `opencode`, then execs `opencode serve` on port `4000`.
 - Published port: host `4000` — container `4000`.
 - Server password comes from the `OPENCODE_SERVER_PASSWORD` env var, defaulting to `change_me`.
+- `OPENCODE_AUTO_UPDATE` controls startup self-update (default `true`). Set to `false`, `0`, or `no` to skip; update failures log a warning and do not block server startup.
 - The image installs Google Chrome stable from Google's official apt repo together with the `chrome-headless` launcher. Chrome is installed only; nothing (including the entrypoint) starts it automatically.
 - DevTools remote debugging binds `127.0.0.1:9222` inside the container only. There is deliberately no port mapping for 9222 and none should be added; consumers use `docker exec`.
 
