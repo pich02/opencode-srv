@@ -62,16 +62,20 @@ Docker Hub image: https://hub.docker.com/r/pich02/opencode-srv
 
 The server password is read from the `OPENCODE_SERVER_PASSWORD` environment variable and falls back to `change_me` when unset.
 
-Set it before starting the stack, e.g. in your shell:
+On startup, the entrypoint runs `opencode upgrade` as the `opencode` user before launching the server. If the update fails (for example, no network access), startup continues with the installed version. Set `OPENCODE_AUTO_UPDATE=false` to skip this step (accepted disable values: `false`, `0`, `no`).
+
+Set variables before starting the stack, e.g. in your shell:
 
 ```bash
 export OPENCODE_SERVER_PASSWORD="your-strong-password"
+export OPENCODE_AUTO_UPDATE=true
 ```
 
-or place it in a `.env` file next to the Compose file:
+or place them in a `.env` file next to the Compose file:
 
 ```dotenv
 OPENCODE_SERVER_PASSWORD=your-strong-password
+OPENCODE_AUTO_UPDATE=true
 ```
 
 ## Usage

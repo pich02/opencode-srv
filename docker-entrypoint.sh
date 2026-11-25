@@ -26,6 +26,22 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
+# Auto-update OpenCode before serving (opt-out: OPENCODE_AUTO_UPDATE=false).
+AUTO_UPDATE="${OPENCODE_AUTO_UPDATE:-true}"
+case "${AUTO_UPDATE,,}" in
+  false|0|no)
+    echo "OpenCode auto-update skipped (OPENCODE_AUTO_UPDATE=${AUTO_UPDATE})"
+    ;;
+  *)
+    echo "Checking for OpenCode updates..."
+    if timeout 120s gosu opencode bash -lc 'opencode upgrade'; then
+      echo "OpenCode update check complete"
+    else
+      echo "Warning: OpenCode update failed; continuing with installed version"
+    fi
+    ;;
+esac
+
 # Drop to the unprivileged opencode user and start OpenCode server.
 export HOME=/home/opencode
-exec gosu opencode bash -c 'source /home/opencode/.profile && opencode serve --hostname 0.0.0.0 --port 4000 --log-level debug --print-logs'
+exec gosu opencode bash -lc 'opencode serve --hostname 0.0.0.0 --port 4000 --log-level debug --print-logs'
